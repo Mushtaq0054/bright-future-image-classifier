@@ -1,15 +1,43 @@
-# Virtual Environment
+# Virtual Environments
 bright_future/
+venv/
+.venv/
+env/
+ENV/
 
-# Data folder
+# Datasets
 data/
 
-# Python Cache
+# Model Checkpoints & Serialized Weights (Tasks 2 & 3)
+models/
+checkpoints/
+saved_models/
+*.pt
+*.pth
+*.onnx
+*.bin
+
+# Training Runs, Logs & Visualizations (Task 4 Grad-CAM)
+logs/
+runs/
+*.log
+
+# Python Cache & Bytecode
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-# IDE and OS files
+# Environment Variables & Secrets
+.env
+.env.*
+
+# IDE, Editor & OS Specific Files
 .vscode/
 .idea/
 *.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+
+Thumbs.db
+.ipynb_checkpoints/
