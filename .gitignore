@@ -1,0 +1,15 @@
+# Virtual Environment
+bright_future/
+
+# Data folder
+data/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and OS files
+.vscode/
+.idea/
+*.DS_Store
