@@ -7,7 +7,7 @@ Automated computer vision classification system developed for **Bright Future Sc
 ## Project Overview
 - **Client:** Bright Future School
 - **Objective:** Build, evaluate, and deploy an image classification pipeline achieving at least **70% accuracy**.
-- **Current Phase:** Task 3 – Improve Model with Augmentation, Class Weighting, and Hyperparameter Search (Completed).
+- **Current Phase:** Task 4 – Perform Error Analysis and Add Grad-CAM Visual Explanations (Completed).
 
 ---
 
@@ -33,6 +33,13 @@ Automated computer vision classification system developed for **Bright Future Sc
 - **Model Optimization:** Identified optimal configuration ($lr = 0.000256$, batch size = 64) and trained improved ResNet-18 model.
 - **Performance Gain:** Improved model achieved **85.23% Validation Accuracy** (+4.67% over baseline), successfully exceeding the Task 2 baseline (80.56%). Checkpoint saved at `models/improved_resnet18_best.pt`.
 
+### Task 4: Error Analysis & Grad-CAM Visual Explainability
+- **Automated Test Error Audit:** Evaluated improved ResNet-18 model on 10,000 unseen test images (`src/error_analysis.py`). Achieved **84.66% Overall Test Accuracy** (8,466 correct vs. 1,534 misclassified).
+- **Misclassified Samples Tracking:** Generated comprehensive CSV export [`results/misclassified_samples.csv`](results/misclassified_samples.csv) detailing image paths, true vs predicted labels, and top-2 prediction confidences.
+- **Grad-CAM Implementation:** Developed PyTorch-native hook architecture (`src/gradcam.py`) extracting gradients and activations from `model.layer4` to compute class-discriminative saliency heatmaps.
+- **Visual Diagnostic Figures:** Generated 3-panel PNG diagnostic visualizations `[Original Image | Grad-CAM Heatmap | Overlay]` in [`results/gradcam/`](results/gradcam/).
+- **Error Analysis Report:** Authored in-depth technical analysis [`docs/error_analysis_report.md`](docs/error_analysis_report.md) breaking down root causes (spurious background correlations, quadruped limb ambiguity, vehicle silhouette overlap) and actionable safety thresholds for Task 5 deployment.
+
 ---
 
 ## Project Directory Structure
@@ -45,21 +52,31 @@ bright-future-image-classifier/
 │   ├── val/                          # 10,000 images (20% validation split)
 │   └── test/                         # 10,000 images (unbiased evaluation set)
 ├── docs/
-│   └── architecture_decision_log.md      # Architectural decisions & design rationale
+│   ├── architecture_decision_log.md      # Architectural decisions & design rationale
+│   └── error_analysis_report.md          # Comprehensive error analysis & Grad-CAM findings
 ├── models/                           # Ignored by git
 │   ├── baseline_resnet18_best.pt     # Baseline model (Val Acc: 80.56%)
-│   └── improved_resnet18_best.pt     # Improved model (Val Acc: 85.23%)
+│   └── improved_resnet18_best.pt     # Improved model (Val Acc: 85.23%, Test Acc: 84.66%)
 ├── results/
 │   ├── training_metrics.csv          # Baseline epoch-by-epoch loss & accuracy logs
 │   ├── random_search_trials.csv      # 5 hyperparameter search trials
 │   ├── improved_training_metrics.csv # Improved model epoch-by-epoch metrics
-│   └── task3_comparison.csv          # Baseline vs improved model performance comparison
+│   ├── task3_comparison.csv          # Baseline vs improved model performance comparison
+│   ├── misclassified_samples.csv     # Complete ranked list of 1,534 test misclassifications
+│   └── gradcam/                      # Grad-CAM 3-panel diagnostic figures
+│       ├── gradcam_error_01_truck_as_automobile.png
+│       ├── gradcam_error_02_dog_as_horse.png
+│       ├── gradcam_error_03_cat_as_frog.png
+│       ├── gradcam_error_04_truck_as_automobile.png
+│       └── gradcam_error_05_cat_as_frog.png
 ├── src/
 │   ├── __init__.py
 │   ├── data_pipeline.py              # Data download, split, and export script
 │   ├── train.py                      # Baseline ResNet-18 training script
 │   ├── train_improved.py             # Improved training with augmentation & class weights
-│   └── hyperparameter_search.py      # Random search optimization over lr & batch size
+│   ├── hyperparameter_search.py      # Random search optimization over lr & batch size
+│   ├── error_analysis.py             # Test set evaluation and misclassification extraction
+│   └── gradcam.py                    # PyTorch Grad-CAM computation & visualization
 ├── .gitignore                        # ML-oriented ignore rules
 ├── requirements.txt                  # Pinned Python dependencies
 └── README.md                         # Project documentation
@@ -113,6 +130,36 @@ To train the improved model with the optimal hyperparameter configuration ($lr=0
 python src/train_improved.py --epochs 3 --batch-size 64 --lr 0.000256 --init-checkpoint models/baseline_resnet18_best.pt
 ```
 
+### 6. Perform Error Analysis (Task 4)
+
+To evaluate the improved model on the 10,000-image test set and generate the misclassification CSV:
+
+```bash
+python src/error_analysis.py --model-path models/improved_resnet18_best.pt --split test
+```
+
+### 7. Generate Grad-CAM Heatmaps (Task 4)
+
+To generate 3-panel Grad-CAM diagnostic figures for high-confidence failure cases:
+
+```bash
+python src/gradcam.py --count 5
+```
+
+---
+
+## Task 4 Error Analysis & Grad-CAM Findings
+
+The improved ResNet-18 model was thoroughly evaluated on the independent 10,000-image test set:
+- **Test Accuracy:** **84.66%** (8,466 correct / 1,534 misclassified).
+- **Misclassified Log:** All 1,534 failure cases are catalogued and sorted by prediction confidence in [`results/misclassified_samples.csv`](results/misclassified_samples.csv).
+- **Comprehensive Report:** See [`docs/error_analysis_report.md`](docs/error_analysis_report.md) for full case studies and deployment safety recommendations.
+
+### Key Grad-CAM Failure Insights:
+1. **Background / Context Shortcuts:** Cats on wet green lawns strongly trigger `frog` predictions because the model attends to moss/grass texture rather than feline facial anatomy.
+2. **Structural & Silhouette Overlap:** Dogs standing upright in side profile activate equine (`horse`) features due to limb length and stance geometry.
+3. **Sub-category Confusion:** Trucks viewed from three-quarter angles without a distinct visible cargo bed activate automobile cabin and chassis filters.
+
 ---
 
 ## Task 3 Hyperparameter Random Search Results
@@ -147,6 +194,6 @@ Both models were evaluated on the identical 10,000-sample validation set (`data/
 - [x] **Task 1:** Repository setup, data pipeline, and architecture decision log.
 - [x] **Task 2:** Build and evaluate transfer-learning baseline model (ResNet-18).
 - [x] **Task 3:** Data augmentation, class weighting, and hyperparameter optimization.
-- [ ] **Task 4:** Error analysis and Grad-CAM visual explanations.
+- [x] **Task 4:** Error analysis and Grad-CAM visual explanations.
 - [ ] **Task 5:** Containerize FastAPI inference service and deploy to Render.
 - [ ] **Task 6:** Final handover package, model card, and user guide.
