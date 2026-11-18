@@ -9,13 +9,14 @@ ENV/
 data/
 
 # Model Checkpoints & Serialized Weights (Tasks 2 & 3)
-models/
+models/*
 checkpoints/
 saved_models/
 *.pt
 *.pth
 *.onnx
 *.bin
+!models/improved_resnet18_best.pt
 
 # Training Runs, Logs & Visualizations (Task 4 Grad-CAM)
 logs/

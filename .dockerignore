@@ -1,0 +1,29 @@
+# Git & IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Virtual Environments
+bright_future/
+venv/
+.venv/
+env/
+
+# Datasets (large image archives)
+data/
+raw/
+
+# Python Bytecode & Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Learning / Local guides
+learning/
+
+# Logs & Temp files
+*.log
+logs/
+results/gradcam/
