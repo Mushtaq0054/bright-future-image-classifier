@@ -7,7 +7,7 @@ Automated computer vision classification system developed for **Bright Future Sc
 ## Project Overview
 - **Client:** Bright Future School
 - **Objective:** Build, evaluate, and deploy an image classification pipeline achieving at least **70% accuracy**.
-- **Current Phase:** Task 4 – Perform Error Analysis and Add Grad-CAM Visual Explanations (Completed).
+- **Current Phase:** Task 5 – Containerize FastAPI Inference Service and Deploy to Render.
 
 ---
 
@@ -40,6 +40,12 @@ Automated computer vision classification system developed for **Bright Future Sc
 - **Visual Diagnostic Figures:** Generated 3-panel PNG diagnostic visualizations `[Original Image | Grad-CAM Heatmap | Overlay]` in [`results/gradcam/`](results/gradcam/).
 - **Error Analysis Report:** Authored in-depth technical analysis [`docs/error_analysis_report.md`](docs/error_analysis_report.md) breaking down root causes (spurious background correlations, quadruped limb ambiguity, vehicle silhouette overlap) and actionable safety thresholds for Task 5 deployment.
 
+### Task 5: FastAPI REST Service, Dockerization & Render Deployment
+- **FastAPI Inference Microservice (`src/app.py`):** REST API serving the fine-tuned ResNet-18 model. Exposes `/predict` (multipart image upload), `/health` (monitoring), and interactive Swagger UI at `/docs`.
+- **School Scene Taxonomy:** Maps granular predictions into Bright Future School operational categories (`classroom` vs. `playground`).
+- **Production Dockerization (`Dockerfile`):** Multi-stage Debian slim container with CPU-only PyTorch wheel optimization, reducing footprint to fit Render free-tier constraints (512 MB RAM).
+- **Cloud Infrastructure (`render.yaml`):** Infrastructure-as-code configuration for one-click deployment on Render Web Services.
+
 ---
 
 ## Project Directory Structure
@@ -71,13 +77,17 @@ bright-future-image-classifier/
 │       └── gradcam_error_05_cat_as_frog.png
 ├── src/
 │   ├── __init__.py
+│   ├── app.py                        # FastAPI REST API serving inference, health & docs
 │   ├── data_pipeline.py              # Data download, split, and export script
 │   ├── train.py                      # Baseline ResNet-18 training script
 │   ├── train_improved.py             # Improved training with augmentation & class weights
 │   ├── hyperparameter_search.py      # Random search optimization over lr & batch size
 │   ├── error_analysis.py             # Test set evaluation and misclassification extraction
 │   └── gradcam.py                    # PyTorch Grad-CAM computation & visualization
+├── .dockerignore                     # Docker build context exclusions
 ├── .gitignore                        # ML-oriented ignore rules
+├── Dockerfile                        # Multi-stage container definition for Render
+├── render.yaml                       # Render Web Service Infrastructure-as-Code
 ├── requirements.txt                  # Pinned Python dependencies
 └── README.md                         # Project documentation
 ```
@@ -146,6 +156,56 @@ To generate 3-panel Grad-CAM diagnostic figures for high-confidence failure case
 python src/gradcam.py --count 5
 ```
 
+### 8. Run FastAPI Inference Service Locally (Task 5)
+
+To start the local REST API server:
+
+```bash
+uvicorn src.app:app --host 0.0.0.0 --port 8000
+```
+- Interactive Swagger UI Documentation: `http://localhost:8000/docs`
+- Health check: `http://localhost:8000/health`
+- Predict via `curl`:
+  ```bash
+  curl -X POST "http://localhost:8000/predict" \
+       -H "accept: application/json" \
+       -H "Content-Type: multipart/form-data" \
+       -F "file=@data/test/cat/img_00001.png"
+  ```
+
+### 9. Build & Run Container with Docker (Task 5)
+
+To build and run the optimized containerized image locally:
+
+```bash
+# Build the Docker image
+docker build -t bright-future-image-classifier:latest .
+
+# Run the container mapping port 8000
+docker run -d -p 8000:8000 --name bright-future-app bright-future-image-classifier:latest
+
+# Verify health status
+curl http://localhost:8000/health
+```
+
+### 10. Deploy to Render Free Tier (Task 5)
+
+1. Push latest code to GitHub:
+   ```bash
+   git push origin main
+   ```
+2. Log into [Render Dashboard](https://dashboard.render.com).
+3. Click **New +** > **Web Service**.
+4. Select `Mushtaq0054/bright-future-image-classifier` GitHub repository.
+5. Choose **Docker** as the runtime environment.
+6. Select **Free** instance type ($0/mo, 512 MB RAM).
+7. Click **Deploy Web Service**.
+8. Once live, test the public endpoint:
+   - Root: `https://<your-render-subdomain>.onrender.com/`
+   - Health: `https://<your-render-subdomain>.onrender.com/health`
+   - Swagger Docs: `https://<your-render-subdomain>.onrender.com/docs`
+   - Inference: `POST https://<your-render-subdomain>.onrender.com/predict`
+
 ---
 
 ## Task 4 Error Analysis & Grad-CAM Findings
@@ -195,5 +255,5 @@ Both models were evaluated on the identical 10,000-sample validation set (`data/
 - [x] **Task 2:** Build and evaluate transfer-learning baseline model (ResNet-18).
 - [x] **Task 3:** Data augmentation, class weighting, and hyperparameter optimization.
 - [x] **Task 4:** Error analysis and Grad-CAM visual explanations.
-- [ ] **Task 5:** Containerize FastAPI inference service and deploy to Render.
+- [x] **Task 5:** Containerize FastAPI inference service and deploy to Render.
 - [ ] **Task 6:** Final handover package, model card, and user guide.
